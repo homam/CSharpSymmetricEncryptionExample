@@ -13,19 +13,35 @@ namespace EncryptionExample
         static readonly string initVector = @"blWwJ4fPS4Bjid8Z8xZXzQ==";
         static void Main(string[] args)
         {
-            var subscriberId = 45865644;
             var salt = DateTime.UtcNow.ToUnixTime();
 
-            var encrypted = Uri.EscapeDataString(Encrypt(String.Format("{0}-{1}", subscriberId, salt)));
-            Console.WriteLine(encrypted);
-            
-            var decrypted = Decrypt(Uri.UnescapeDataString(encrypted));
-            var decryptedSubscriberId = int.Parse(decrypted.Split('-')[0]);
-            var decryptedUnixTime = long.Parse(decrypted.Split('-')[1]);
+            // the AuthServer receives the salt from Ma
+            var encryptedToken = RequestFromMobileAcademy(Encrypt(salt.ToString()));
+            Console.WriteLine(encryptedToken);
+            // and it sends the encryptedToken (sid-salt) back to MA
 
-            Console.WriteLine("SID = {0}, Time = {1}", decryptedSubscriberId, decryptedUnixTime.ToDateTimeFromUnixTime().ToLocal());
+            // MA decrypt the token
+            var decryptedToken = FromAuthServer(encryptedToken);
+            Console.WriteLine("SID = {0}, Time = {1}", decryptedToken.Item1, decryptedToken.Item2.ToDateTimeFromUnixTime().ToLocal());
+            // that's it!
 
             Console.Read();
+        }
+
+        static string RequestFromMobileAcademy(string encryptedUnixTime)
+        {
+            var salt = long.Parse(Decrypt(Uri.UnescapeDataString(encryptedUnixTime)));
+            var subscriberId = 45865644; // get subscriberId somehow
+            var encrypted = Uri.EscapeDataString(Encrypt(String.Format("{0}-{1}", subscriberId, salt)));
+            return encrypted;
+        }
+
+        static Tuple<int, long> FromAuthServer(string encryptedToken)
+        {
+            var decrypted = Decrypt(Uri.UnescapeDataString(encryptedToken));
+            var decryptedSubscriberId = int.Parse(decrypted.Split('-')[0]);
+            var decryptedUnixTime = long.Parse(decrypted.Split('-')[1]);
+            return Tuple.Create(decryptedSubscriberId, decryptedUnixTime);
         }
 
         static string Encrypt(string text) {
