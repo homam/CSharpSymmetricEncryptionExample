@@ -13,7 +13,7 @@ namespace EncryptionExample
         static readonly string initVector = @"blWwJ4fPS4Bjid8Z8xZXzQ==";
         static void Main(string[] args)
         {
-            var salt = DateTime.UtcNow.ToUnixTime();
+            var salt = DateTime.UtcNow.ToJsonTime();
 
             // the AuthServer receives the salt from Ma
             var encryptedToken = RequestFromMobileAcademy(Encrypt(salt.ToString()));
@@ -22,15 +22,15 @@ namespace EncryptionExample
 
             // MA decrypt the token
             var decryptedToken = FromAuthServer(encryptedToken);
-            Console.WriteLine("SID = {0}, Time = {1}", decryptedToken.Item1, decryptedToken.Item2.ToDateTimeFromUnixTime().ToLocal());
+            Console.WriteLine("SID = {0}, Time = {1}", decryptedToken.Item1, decryptedToken.Item2.ToDateTimeFromJsonTime().ToLocal());
             // that's it!
 
             Console.Read();
         }
 
-        static string RequestFromMobileAcademy(string encryptedUnixTime)
+        static string RequestFromMobileAcademy(string saltString)
         {
-            var salt = long.Parse(Decrypt(Uri.UnescapeDataString(encryptedUnixTime)));
+            var salt = long.Parse(Decrypt(Uri.UnescapeDataString(saltString)));
             var subscriberId = 45865644; // get subscriberId somehow
             var encrypted = Uri.EscapeDataString(Encrypt(String.Format("{0}-{1}", subscriberId, salt)));
             return encrypted;
@@ -40,8 +40,8 @@ namespace EncryptionExample
         {
             var decrypted = Decrypt(Uri.UnescapeDataString(encryptedToken));
             var decryptedSubscriberId = int.Parse(decrypted.Split('-')[0]);
-            var decryptedUnixTime = long.Parse(decrypted.Split('-')[1]);
-            return Tuple.Create(decryptedSubscriberId, decryptedUnixTime);
+            var decryptedJsonTime = long.Parse(decrypted.Split('-')[1]);
+            return Tuple.Create(decryptedSubscriberId, decryptedJsonTime);
         }
 
         static string Encrypt(string text) {

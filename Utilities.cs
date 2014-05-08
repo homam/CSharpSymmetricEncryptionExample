@@ -117,7 +117,7 @@ namespace MLearning
 
         #region MD5
 
-        public static string Md5Hash(string input)
+        public static string Md5Hash(this string input)
         {
             // Create a new instance of the MD5CryptoServiceProvider object.
             MD5 md5Hasher = MD5.Create();
@@ -739,9 +739,20 @@ namespace MLearning
             return (long) (value - UnixEpoch).TotalSeconds;
         }
 
+        public static long ToJsonTime(this DateTime value)
+        {
+            return (long)(value - UnixEpoch).TotalMilliseconds;
+        }
+
+
         public static DateTime ToDateTimeFromUnixTime(this long value)
         {
             return UnixEpoch.AddSeconds(value);
+        }
+
+        public static DateTime ToDateTimeFromJsonTime(this long value)
+        {
+            return UnixEpoch.AddMilliseconds(value);
         }
 
         #region JulianDay
